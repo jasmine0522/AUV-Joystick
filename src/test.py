@@ -1,7 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String
 from sensor_msgs.msg import Joy
+
+'''
+rosrun joy joy_node
+'''
 
 # Author: Andrew Dai
 # This ROS Node converts Joystick inputs from the joy node
@@ -14,50 +19,51 @@ from sensor_msgs.msg import Joy
 class Joystick:
     def __init__(self):
         # Intializes everything
-        self.lx=0
-        self.az=0
+        self.K = 4      # to enlarge the result
+        self.ly = 0
+        self.rx = 0
+        self.ry = 0
         
-        rospy.init_node('Joy2Turtle',annoymous=True ) # node_name
+        rospy.init_node('Joy2Turtle',anonymous=True ) # node_name
         rospy.Subscriber("joy", Joy, self.callback)
         
-        self.pub = rospy.Publisher('joy_test', String, queue_size=10)
+        self.pub = rospy.Publisher('cmd', String, queue_size=10)
         self.rate = rospy.Rate(10)
         
         self.start()
-
-    def callback(self,data):
         
-        # vertical left stick axis = linear rate
-       
-        self.lx = 4*data.axes[4]
-        
-        # horizontal left stick axis = turn rate
-        self.az = 4*data.axes[3]
 
+    def callback(self,data):             
+        self.ly = data.axes[5] * self.K     # {0, -1, 1}
+        self.rx = data.axes[2] * self.K     # [-1, 1]
+        self.ry = data.axes[3] * self.K     # [-1, 1]
+        # print(data)
     
     
-    def start(self):
-       
+    def start(self):       
         while not rospy.is_shutdown():
-            #twist=Twist()
-            #twist.linear.x=self.lx
-            #twist.angular.z=self.az
-            if self.lx > 0.5 :
-                test_str = 'forward'
-            elif self.lx < -0.5 :
-                test_str = 'backward'
-            elif self.az > 0.5 :
-                test_str = 'right'
-            elif self.az < -0.5 :
-                test_str = 'left'
-            else :
-                test_str = 'stable'
-            self.pub.publish(test_str)
-            print('test_str :',test_str)
+            if self.ry > 0.5:
+                cmd_str = 'forward'
+            elif self.ry < -0.5:
+                cmd_str = 'backward'
+            elif self.rx > 0.5:
+                cmd_str = 'left'
+            elif self.rx < -0.5:
+                cmd_str = 'right'
+            elif self.ly > 0.5:
+                cmd_str = 'up'
+            elif self.ly < -0.5:
+                cmd_str = 'down'
+            else:
+                cmd_str = 'stop'
+            self.pub.publish(cmd_str)
+            print('cmd_str :',cmd_str)
+            
             self.rate.sleep()
+
+
 if __name__ == '__main__':
     try:
         Joystick()
     except rospy.ROSInterruptException:
-        pass
         print('Bye')
