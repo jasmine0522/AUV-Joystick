@@ -5,7 +5,9 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Joy
 
 '''
-rosrun joy joy_node
+ls -l /dev/input/js0
+sudo chmod a+rw /dev/input/js0
+rosrun joy joy_node 
 '''
 
 # Author: Andrew Dai
@@ -34,7 +36,7 @@ class Joystick:
         
 
     def callback(self,data):             
-        self.ly = data.axes[5] * self.K     # {0, -1, 1}
+        self.ly = data.axes[1] * self.K     # {0, -1, 1}
         self.rx = data.axes[2] * self.K     # [-1, 1]
         self.ry = data.axes[3] * self.K     # [-1, 1]
         # print(data)
